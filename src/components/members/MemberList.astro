@@ -1,0 +1,122 @@
+---
+import { App } from 'octokit';
+import fs from 'node:fs';
+import Github from './Github.astro';
+
+const GITHUB_APP_ID = 3702060;
+const GITHUB_APP_INSTALLATION_ID = 132060529;
+const GITHUB_ORG = 'Web-Design-Development-Society';
+
+const app = new App({
+  appId: GITHUB_APP_ID,
+  privateKey: import.meta.env.GITHUB_APP_TOKEN,
+});
+
+const installationOctokit = await app.getInstallationOctokit(
+  GITHUB_APP_INSTALLATION_ID,
+);
+
+const events = await installationOctokit.request('GET /orgs/{org}/events', {
+  org: GITHUB_ORG,
+  per_page: 100,
+});
+
+console.log(events.data);
+
+let members: any[] = [];
+if (!fs.existsSync('./members.json')) {
+  members = await installationOctokit.paginate('GET /orgs/{org}/members', {
+    org: GITHUB_ORG,
+    per_page: 20,
+  });
+
+  fs.writeFile(
+    './members.json',
+    JSON.stringify({ data: members }),
+    'utf8',
+    (err) => {
+      if (err) {
+        console.error(err);
+      }
+    },
+  );
+} else {
+  members = JSON.parse(fs.readFileSync('./members.json', 'utf8')).data;
+}
+
+let users: any[] = [];
+if (!fs.existsSync('./users.json')) {
+  for (const member of members) {
+    const user = await installationOctokit.request('GET /users/{username}', {
+      username: member.login,
+    });
+    users.push({
+      ...user.data,
+      events: events.data.reduce((acc, event) => {
+        if (
+          event.actor.login === member.login &&
+          event.type === 'PullRequestEvent' &&
+          event.repo.name.startsWith('Web-Design-Development-Society/')
+        ) {
+          acc++;
+        }
+        return acc;
+      }, 0),
+      last_merged_pr_at: events.data.find(
+        (event) =>
+          event.type === 'PullRequestEvent' &&
+          event.actor.login === member.login &&
+          event.repo.name.startsWith('Web-Design-Development-Society/'),
+      )?.created_at,
+    });
+  }
+  fs.writeFile(
+    './users.json',
+    JSON.stringify({ data: users.sort((a, b) => b.events - a.events) }),
+    'utf8',
+    (err) => {
+      if (err) {
+        console.error(err);
+      }
+    },
+  );
+} else {
+  users = JSON.parse(fs.readFileSync('./users.json', 'utf8')).data;
+}
+
+// const rateLimit = await app.octokit.request('GET /rate_limit');
+// console.log(rateLimit.data.rate);
+---
+
+<div>
+  <h1>Members</h1>
+  <ul class="grid tablet:grid-cols-2 gap-2 mx-4">
+    {
+      users.map((user) => (
+        <li class="member-card w-full">
+          <img src={user.avatar_url} alt={user.login} class="avatar" />
+          <div class="w-full min-w-0 text-left ml-1">
+            <div class="font-bold text-lg">
+              {user.name || <span class="text-disabled">(Not Provided)</span>}
+            </div>
+            <div class="flex items-center gap-2 w-full">
+              <Github />
+              <a href={user.html_url} class="truncate flex-1 min-w-0 block">
+                {user.login}
+              </a>
+            </div>
+            <div class="text-sm text-disabled">
+              {`${user.events} PRs` || '-'}
+            </div>
+            <div>
+              Last Activity:{' '}
+              {user.last_merged_pr_at
+                ? new Date(user.last_merged_pr_at).toLocaleDateString()
+                : '-'}
+            </div>
+          </div>
+        </li>
+      ))
+    }
+  </ul>
+</div>
