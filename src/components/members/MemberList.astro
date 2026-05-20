@@ -1,7 +1,7 @@
 ---
 import { App } from 'octokit';
 import fs from 'node:fs';
-import Github from './Github.astro';
+import MemberCard from './MemberCard.astro';
 
 const GITHUB_APP_ID = 3702060;
 const GITHUB_APP_INSTALLATION_ID = 132060529;
@@ -20,8 +20,6 @@ const events = await installationOctokit.request('GET /orgs/{org}/events', {
   org: GITHUB_ORG,
   per_page: 100,
 });
-
-console.log(events.data);
 
 let members: any[] = [];
 if (!fs.existsSync('./members.json')) {
@@ -90,33 +88,8 @@ if (!fs.existsSync('./users.json')) {
 
 <div>
   <h1>Members</h1>
+  <p>Total members: {users.length}</p>
   <ul class="grid tablet:grid-cols-2 gap-2 mx-4">
-    {
-      users.map((user) => (
-        <li class="member-card w-full">
-          <img src={user.avatar_url} alt={user.login} class="avatar" />
-          <div class="w-full min-w-0 text-left ml-1">
-            <div class="font-bold text-lg">
-              {user.name || <span class="text-disabled">(Not Provided)</span>}
-            </div>
-            <div class="flex items-center gap-2 w-full">
-              <Github />
-              <a href={user.html_url} class="truncate flex-1 min-w-0 block">
-                {user.login}
-              </a>
-            </div>
-            <div class="text-sm text-disabled">
-              {`${user.events} PRs` || '-'}
-            </div>
-            <div>
-              Last Activity:{' '}
-              {user.last_merged_pr_at
-                ? new Date(user.last_merged_pr_at).toLocaleDateString()
-                : '-'}
-            </div>
-          </div>
-        </li>
-      ))
-    }
+    {users.map((user) => <MemberCard member={user} />)}
   </ul>
 </div>

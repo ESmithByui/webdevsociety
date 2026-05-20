@@ -1,0 +1,37 @@
+---
+import Github from './Github.astro';
+
+const { member } = Astro.props;
+---
+
+<li class="member-card w-full">
+  <img src={member.avatar_url} alt={member.login} class="avatar" />
+  <div class="w-full min-w-0 text-left ml-1">
+    <div class="font-bold text-lg">
+      {member.name || <span class="text-disabled">(Not Provided)</span>}
+    </div>
+    <div class="flex items-center gap-2 w-full">
+      <Github />
+      <a href={member.html_url} class="truncate flex-1 min-w-0 block">
+        {member.login}
+      </a>
+    </div>
+    {
+      member.events > 0 && (
+        <div class="text-sm text-disabled">
+          {`${member.events} Contributions` || '-'}
+        </div>
+      )
+    }
+    {
+      member.last_merged_pr_at && (
+        <div>
+          Last Activity:{' '}
+          {member.last_merged_pr_at
+            ? new Date(member.last_merged_pr_at).toLocaleDateString()
+            : '-'}
+        </div>
+      )
+    }
+  </div>
+</li>
