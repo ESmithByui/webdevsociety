@@ -2,6 +2,7 @@
 import { App } from 'octokit';
 import fs from 'node:fs';
 import MemberCard from './MemberCard.astro';
+import type { OrgEvent, MemberUser } from '../../../types';
 
 const GITHUB_APP_ID = 3702060;
 const GITHUB_APP_INSTALLATION_ID = 132060529;
@@ -16,21 +17,19 @@ const installationOctokit = await app.getInstallationOctokit(
   GITHUB_APP_INSTALLATION_ID,
 );
 
-const events = await installationOctokit.request('GET /orgs/{org}/events', {
-  org: GITHUB_ORG,
-  per_page: 100,
-});
-
-let members: any[] = [];
-if (!fs.existsSync('./members.json')) {
-  members = await installationOctokit.paginate('GET /orgs/{org}/members', {
-    org: GITHUB_ORG,
-    per_page: 20,
-  });
+let events: OrgEvent[] = [];
+if (!fs.existsSync('./events.json')) {
+  const eventsResponse = await installationOctokit.request(
+    'GET /orgs/{org}/events',
+    {
+      org: GITHUB_ORG,
+      per_page: 100,
+    },
+  );
 
   fs.writeFile(
-    './members.json',
-    JSON.stringify({ data: members }),
+    './events.json',
+    JSON.stringify({ data: eventsResponse.data }),
     'utf8',
     (err) => {
       if (err) {
@@ -38,19 +37,47 @@ if (!fs.existsSync('./members.json')) {
       }
     },
   );
+
+  events = eventsResponse.data;
 } else {
-  members = JSON.parse(fs.readFileSync('./members.json', 'utf8')).data;
+  events = JSON.parse(fs.readFileSync('./events.json', 'utf8')).data;
 }
 
-let users: any[] = [];
+let members: MemberUser[] = [];
+if (!fs.existsSync('./members.json')) {
+  const membersResponse = await installationOctokit.paginate(
+    'GET /orgs/{org}/members',
+    {
+      org: GITHUB_ORG,
+      per_page: 20,
+    },
+  );
+
+  fs.writeFile(
+    './members.json',
+    JSON.stringify({ data: membersResponse }),
+    'utf8',
+    (err) => {
+      if (err) {
+        console.error(err);
+      }
+    },
+  );
+}
+members = JSON.parse(fs.readFileSync('./members.json', 'utf8')).data;
+
+let users: MemberUser[] = [];
 if (!fs.existsSync('./users.json')) {
   for (const member of members) {
-    const user = await installationOctokit.request('GET /users/{username}', {
-      username: member.login,
-    });
+    const userResponse = await installationOctokit.request(
+      'GET /users/{username}',
+      {
+        username: member.login,
+      },
+    );
     users.push({
-      ...user.data,
-      events: events.data.reduce((acc, event) => {
+      ...userResponse.data,
+      events: events.reduce((acc, event) => {
         if (
           event.actor.login === member.login &&
           event.type === 'PullRequestEvent' &&
@@ -60,7 +87,7 @@ if (!fs.existsSync('./users.json')) {
         }
         return acc;
       }, 0),
-      last_merged_pr_at: events.data.find(
+      last_merged_pr_at: events.find(
         (event) =>
           event.type === 'PullRequestEvent' &&
           event.actor.login === member.login &&
@@ -86,10 +113,10 @@ if (!fs.existsSync('./users.json')) {
 // console.log(rateLimit.data.rate);
 ---
 
-<div>
-  <h1>Members</h1>
-  <p>Total members: {users.length}</p>
-  <ul class="grid tablet:grid-cols-2 gap-2 mx-4">
+<div class="mx-4">
+  <h1 class="text-2xl font-bold">Members</h1>
+  <p class="text-lg">Total members: {users.length}</p>
+  <ul class="grid tablet:grid-cols-2 gap-2">
     {users.map((user) => <MemberCard member={user} />)}
   </ul>
 </div>
