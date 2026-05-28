@@ -9,13 +9,13 @@ const { member, active = false } = Astro.props;
   data-member-active={active ? 'true' : 'false'}
 >
   <img src={member.avatar_url} alt={member.login} class="w-full" />
-  <div class="w-full min-w-0 text-left ml-1">
+  <div class="w-full min-w-0 text-left ml-sm">
     <div class="font-bold text-lg">
       {member.name || <span class="text-disabled">(Not Provided)</span>}
     </div>
-    <div class="flex items-center gap-2 w-full pb-2">
+    <div class="github-link-container">
       <Github />
-      <a href={member.html_url} class="truncate flex-1 min-w-0 block">
+      <a href={member.html_url} class="github-link truncate">
         {member.login}
       </a>
     </div>
@@ -31,5 +31,23 @@ const { member, active = false } = Astro.props;
   .member-card:hover {
     transform: scale(1.05);
     transition: transform 0.3s ease;
+  }
+
+  .min-w-0 {
+    min-width: 0;
+  }
+
+  .github-link {
+    display: block;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .github-link-container {
+    display: flex;
+    justify-items: center;
+    gap: 8px;
+    width: 100%;
+    padding-bottom: 8px;
   }
 </style>

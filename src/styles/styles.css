@@ -169,10 +169,6 @@ h6 {
   transform: none;
 }
 
-.grid {
-  display: grid;
-}
-
 .truncate {
   white-space: nowrap;
   overflow: hidden;
@@ -187,80 +183,12 @@ h6 {
   overflow: hidden;
 }
 
-.pb-2 {
-  padding-bottom: 8px;
-}
-
-.h-1 {
-  height: 1rem;
-}
-
-.w-1 {
-  width: 1rem;
-}
-
 .w-full {
   width: 100%;
-}
-
-.text-disabled {
-  color: var(--disabled-color);
-}
-
-.flex {
-  display: flex;
-}
-
-.items-center {
-  align-items: center;
-}
-
-.gap-2 {
-  gap: 0.5rem;
-}
-
-.w-full {
-  width: 100%;
-}
-
-.min-w-0 {
-  min-width: 0;
-}
-
-.block {
-  display: block;
-}
-
-.flex-1 {
-  flex: 1;
 }
 
 .text-left {
   text-align: left;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-.mx-4 {
-  margin-inline: calc(var(--spacing) * 4);
-}
-
-.mt-4 {
-  margin-top: calc(var(--spacing) * 4);
-}
-
-.mt-8 {
-  margin-top: calc(var(--spacing) * 8);
-}
-
-.mb-4 {
-  margin-bottom: calc(var(--spacing) * 4);
-}
-
-.ml-1 {
-  margin-left: calc(var(--spacing) * 1);
 }
 
 .text-lg {
@@ -271,18 +199,18 @@ h6 {
   font-weight: bold;
 }
 
-.mx-4 {
+.mx-sm {
   margin-inline: calc(var(--spacing) * 4);
 }
 
-@media screen and (min-width: 720px) {
-  .tablet\:grid-cols-4 {
-    grid-template-columns: repeat(4, 1fr);
-  }
+.mt-sm {
+  margin-top: calc(var(--spacing) * 4);
 }
 
-@media screen and (min-width: 1024px) {
-  .desktop\:grid-cols-6 {
-    grid-template-columns: repeat(6, 1fr);
-  }
+.ml-sm {
+  margin-left: calc(var(--spacing) * 4);
+}
+
+.text-disabled {
+  color: var(--disabled-color);
 }

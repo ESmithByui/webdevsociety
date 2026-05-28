@@ -156,8 +156,8 @@ if (!fs.existsSync('./users.json')) {
 // console.log(rateLimit.data.rate);
 ---
 
-<div class="mx-4 member-directory">
-  <h1 class="text-2xl font-bold mt-8 text-center">Members</h1>
+<div class="mx-sm member-directory">
+  <h1 class="text-2xl font-bold mt-sm text-center">Members</h1>
   <div class="filters-container">
     <div>Filters:</div>
     <label class="active-only-filter">
@@ -165,10 +165,7 @@ if (!fs.existsSync('./users.json')) {
       Show active only ({users.filter(isActiveInLastMonth).length})
     </label>
   </div>
-  <ul
-    class="grid tablet:grid-cols-4 desktop:grid-cols-6 gap-2"
-    id="member-list"
-  >
+  <ul id="member-list">
     {
       users.map((user) => (
         <MemberCard member={user} active={isActiveInLastMonth(user)} />
@@ -178,6 +175,10 @@ if (!fs.existsSync('./users.json')) {
 </div>
 
 <style>
+  #member-list {
+    display: grid;
+    gap: 4px;
+  }
   .filters-container {
     border: 1px solid var(--primary-color);
     border-radius: 4px;
@@ -195,5 +196,17 @@ if (!fs.existsSync('./users.json')) {
   .member-directory:has(#active-only-filter:checked)
     :global([data-member-active='false']) {
     display: none !important;
+  }
+
+  @media screen and (min-width: 720px) {
+    #member-list {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  @media screen and (min-width: 1024px) {
+    #member-list {
+      grid-template-columns: repeat(6, 1fr);
+    }
   }
 </style>
