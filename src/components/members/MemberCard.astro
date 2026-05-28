@@ -7,6 +7,8 @@ const { member, active = false } = Astro.props;
 <li
   class="member-card overflow-hidden"
   data-member-active={active ? 'true' : 'false'}
+  data-member-login={member.login.toLowerCase()}
+  data-member-name={(member.name || '').toLowerCase()}
 >
   <img src={member.avatar_url} alt={member.login} class="w-full" />
   <div class="w-full min-w-0 text-left ml-sm">

@@ -159,12 +159,21 @@ if (!fs.existsSync('./users.json')) {
 <div class="mx-sm member-directory">
   <h1 class="text-2xl font-bold mt-sm text-center">Members</h1>
   <div class="filters-container">
-    <div>Filters:</div>
-    <label class="active-only-filter">
+    <label class="search-filter" for="member-search">
+      <span class="read-only">Search by name or Github Handle</span>
+      <input
+        id="member-search"
+        type="search"
+        placeholder="Search by name or handle..."
+        autocomplete="off"
+      />
+    </label>
+    <label class="active-only-filter" for="active-only-filter">
       <input type="checkbox" id="active-only-filter" />
       Show active only ({users.filter(isActiveInLastMonth).length})
     </label>
   </div>
+  <p id="members-results" class="members-results" aria-live="polite"></p>
   <ul id="member-list">
     {
       users.map((user) => (
@@ -172,18 +181,116 @@ if (!fs.existsSync('./users.json')) {
       ))
     }
   </ul>
+  <div class="pagination-controls">
+    <button id="members-prev-page" type="button" class="pagination-button">
+      Previous
+    </button>
+    <span id="members-page-indicator" class="pagination-indicator"
+      >Page 1 of 1</span
+    >
+    <button id="members-next-page" type="button" class="pagination-button">
+      Next
+    </button>
+  </div>
 </div>
+
+<script>
+  const membersPerPage = 20;
+  const memberList = document.getElementById('member-list');
+  const activeOnlyInput = document.getElementById('active-only-filter');
+  const searchInput = document.getElementById('member-search');
+  const prevButton = document.getElementById('members-prev-page');
+  const nextButton = document.getElementById('members-next-page');
+  const pageIndicator = document.getElementById('members-page-indicator');
+  const resultsElement = document.getElementById('members-results');
+
+  if (
+    memberList &&
+    activeOnlyInput instanceof HTMLInputElement &&
+    searchInput instanceof HTMLInputElement &&
+    prevButton instanceof HTMLButtonElement &&
+    nextButton instanceof HTMLButtonElement &&
+    pageIndicator &&
+    resultsElement
+  ) {
+    const cards = Array.from(memberList.querySelectorAll('li'));
+    let currentPage = 1;
+
+    const updateView = () => {
+      const query = searchInput.value.trim().toLowerCase();
+      const activeOnly = activeOnlyInput.checked;
+
+      const filteredCards = cards.filter((card) => {
+        const isActive = card.dataset.memberActive === 'true';
+        const login = card.dataset.memberLogin || '';
+        const name = card.dataset.memberName || '';
+        const matchesSearch =
+          query.length === 0 || login.includes(query) || name.includes(query);
+        const matchesActive = !activeOnly || isActive;
+        return matchesSearch && matchesActive;
+      });
+
+      const totalPages = Math.max(
+        1,
+        Math.ceil(filteredCards.length / membersPerPage),
+      );
+      currentPage = Math.min(currentPage, totalPages);
+      const start = (currentPage - 1) * membersPerPage;
+      const end = start + membersPerPage;
+      const paginatedCards = new Set(filteredCards.slice(start, end));
+
+      for (const card of cards) {
+        card.style.display = paginatedCards.has(card) ? '' : 'none';
+      }
+
+      pageIndicator.textContent = `Page ${currentPage} of ${totalPages}`;
+      resultsElement.textContent = `${filteredCards.length} member${
+        filteredCards.length === 1 ? '' : 's'
+      } found`;
+
+      prevButton.disabled = currentPage <= 1;
+      nextButton.disabled = currentPage >= totalPages;
+    };
+
+    activeOnlyInput.addEventListener('change', () => {
+      currentPage = 1;
+      updateView();
+    });
+
+    searchInput.addEventListener('input', () => {
+      currentPage = 1;
+      updateView();
+    });
+
+    prevButton.addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage -= 1;
+        updateView();
+      }
+    });
+
+    nextButton.addEventListener('click', () => {
+      currentPage += 1;
+      updateView();
+    });
+
+    updateView();
+  }
+</script>
 
 <style>
   #member-list {
     display: grid;
     gap: 4px;
   }
+
   .filters-container {
     border: 1px solid var(--primary-color);
     border-radius: 4px;
     padding: 4px;
     margin: 4px 0;
+    display: flex;
+    gap: 0.5rem;
   }
 
   .active-only-filter {
@@ -193,9 +300,54 @@ if (!fs.existsSync('./users.json')) {
     cursor: pointer;
   }
 
-  .member-directory:has(#active-only-filter:checked)
-    :global([data-member-active='false']) {
-    display: none !important;
+  .search-filter {
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  #member-search {
+    border: 1px solid var(--primary-color);
+    border-radius: 4px;
+    padding: 0.5rem;
+    width: 30rem;
+  }
+
+  .members-results {
+    margin: 0.5rem 0;
+  }
+
+  .pagination-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+  }
+
+  .pagination-button {
+    border: 1px solid var(--primary-color);
+    border-radius: 4px;
+    background: white;
+    color: var(--primary-color);
+    padding: 0.4rem 0.8rem;
+    cursor: pointer;
+  }
+
+  .pagination-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .read-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
   }
 
   @media screen and (min-width: 480px) {
