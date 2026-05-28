@@ -118,6 +118,7 @@ if (!fs.existsSync('./users.json')) {
         username: member.login,
       },
     );
+
     users.push({
       ...userResponse.data,
       events: events.reduce((acc, event) => {
@@ -133,7 +134,9 @@ if (!fs.existsSync('./users.json')) {
       last_event_at: getLastEventAt(member.login, events) ?? null,
     });
   }
+
   users = sortMembers(users);
+
   fs.writeFile(
     './users.json',
     JSON.stringify({ data: users }),
@@ -151,9 +154,6 @@ if (!fs.existsSync('./users.json')) {
     ),
   );
 }
-
-// const rateLimit = await app.octokit.request('GET /rate_limit');
-// console.log(rateLimit.data.rate);
 ---
 
 <div class="mx-sm member-directory">
